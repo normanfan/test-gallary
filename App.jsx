@@ -13,13 +13,21 @@ imgDataArray =(function getImageURL(imgDataArray){
 
 	return imgDataArray;
 })(imgDataArray)
+//湖区随机值
+function getRangeRandom(low,high){
+	return Math.floor(Math.random() * (high - low) + low);
+}
 
 var ImgFigure = React.createClass({
 	
 	render:function(){
 
+var styleObj={};
+if(this.props.arrange.pos){
+	styleObj = this.props.arrange.pos;
+}
 		return(
-			<figure className='img-figure'>
+			<figure className='img-figure' style={styleObj}>
 				<img src ={this.props.data.imageURL}
 				alt={this.props.data.fileName}/>
 				<figcaption>
@@ -65,15 +73,15 @@ var App  = React.createClass({
  				}
  				this.Constans.hPosRange.leftSecX[0] = -halfimgW;
  				this.Constans.hPosRange.leftSecX[1]=halfStageW - halfimgW*3;
- 				this.Constans.hPosRange.rightSecX[0]=halfStageW - halfimgW;
+ 				this.Constans.hPosRange.rightSecX[0]=halfStageW + halfimgW;
  				this.Constans.hPosRange.rightSecX[1] = stageW- halfimgW;
 				this.Constans.hPosRange.y[0]= -halfimgH;
 				this.Constans.hPosRange.y[1]=stageH -halfimgH;
 
 				this.Constans.vPosRange.topY[0]=-halfimgH;
 				this.Constans.vPosRange.topY[1]=halfstageH - halfimgH * 3;
-				this.Constans.vPosRange.x[0]=halfimgW - imgW;
-				this.Constans.vPosRange.x[1]= halfimgW;
+				this.Constans.vPosRange.x[0]=halfStageW - imgW;
+				this.Constans.vPosRange.x[1]= halfStageW;
 				this.rearrange(0);
 	},
 	getInitialState:function(){
@@ -100,13 +108,48 @@ var App  = React.createClass({
 			hPosRangeRightSecX = hPosRange.rightSecX,
 			hPosRangeY = hPosRange.y,
 			vPosRangeTopY = vPosRange.topY,
-			vPosRangX = vPosRange.X,
+			vPosRangX = vPosRange.x,
 
 			imgsArrangeTopArr=[],
-			topImgNum = Math.floor(Math.random() * 2),
+			topImgNum = Math.floor(Math.random() * 2), //取一个或者不取
 			topImgSpliceIndex =0,
 			imgsArrangeCenterArr = imgsArrangeArr.splice(centerIndex,1);
+			// 首先居中
 			imgsArrangeCenterArr[0].pos = centerPos;
+			topImgSpliceIndex = Math.floor(Math.random() * (imgsArrangeArr.length - topImgNum));
+			imgsArrangeTopArr = imgsArrangeArr.splice(topImgSpliceIndex,topImgNum);
+
+			//布局位于上侧的图片
+			imgsArrangeTopArr.forEach(function(value,index){
+				imgsArrangeTopArr[index].pos={
+					top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
+					left:getRangeRandom(vPosRangX[0],vPosRangX[1])
+				}
+			});
+
+			for (var i = 0,j=imgsArrangeArr.length,k=j / 2; i < j; i++) {
+				var hPosRangeLORX = null;
+				//前半部分左边，
+				if(i<k){
+					hPosRangeLORX = hPosRangeLeftSecX;
+				}else{
+					hPosRangeLORX = hPosRangeRightSecX;
+				}
+
+				imgsArrangeArr[i].pos = {
+					top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
+					left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+				}
+			}
+			if(imgsArrangeTopArr&&imgsArrangeTopArr[0]){
+				imgsArrangeArr.splice(topImgSpliceIndex,0,imgsArrangeTopArr[0]);
+			}
+
+			imgsArrangeArr.splice(centerIndex,0,imgsArrangeCenterArr[0]);
+
+			this.setState({
+				imgsArrangeArr:imgsArrangeArr
+			})
 	},
 	render:function(){
 		var controllerUnits = [],
@@ -121,7 +164,7 @@ var App  = React.createClass({
 					}
 				}
 			}
-		imgFigures.push(<ImgFigure ref={'ImgFigure'+index} data={value}/>);
+		imgFigures.push(<ImgFigure ref={'ImgFigure'+index} data={value} arrange={self.state.imgsArrangeArr[index]}/>);
 		});
       return (
          <section className="stage" ref="stage">
