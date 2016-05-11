@@ -2,5 +2,5 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import App from './App.jsx';
-
-ReactDOM.render(<App />, document.getElementById('app'))
+//var css = require("./src/style/main.css");
+ReactDOM.render(<App />, document.getElementById('content'))
