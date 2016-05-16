@@ -17,24 +17,62 @@ imgDataArray =(function getImageURL(imgDataArray){
 function getRangeRandom(low,high){
 	return Math.floor(Math.random() * (high - low) + low);
 }
-
+//获取0-30都之间 的任意征服之
+function get30DegRandom(){
+	//return 15;
+ return ((Math.random()>0.5?'':'-') +Math.floor(Math.random()*30));
+}
 var ImgFigure = React.createClass({
-	
+	handleClick:function(e){
+		if(this.props.arrange.isCenter){
+		this.props.inverse()
+		}else{
+			this.props.center()
+		}
+		e.stopPropagation();
+		e.preventDefault();
+	},
 	render:function(){
 
-var styleObj={};
-if(this.props.arrange.pos){
-	styleObj = this.props.arrange.pos;
-}
+	var styleObj={};
+	if(this.props.arrange.pos){
+		styleObj = this.props.arrange.pos;
+	}
+	if(this.props.arrange.rotate){
+		['MozTransform','msTransform','WebkitTransform','transform'].forEach(function(value){
+		styleObj[value] = 'rotate('+this.props.arrange.rotate+'deg)';
+		}.bind(this))
+	}
+
+	var imgFigureClassName = "img-figure";
+		imgFigureClassName+=this.props.arrange.isInverse?" is-inverse":"";
 		return(
-			<figure className='img-figure' style={styleObj}>
+			<figure className={imgFigureClassName} style={styleObj} onClick={this.handleClick}>
 				<img src ={this.props.data.imageURL}
 				alt={this.props.data.fileName}/>
 				<figcaption>
 					<h2 className="img-title">{this.props.data.title}</h2>
 				</figcaption>
+				<div className="img-back" onClick={this.handleClick}>
+					<p>
+						 {this.props.data.desc}
+					</p>
+				</div>
 			</figure>
 			)
+	}
+});
+
+var ControllerUnit = React.createClass({
+	handleClick:function(e){
+		this.props.centerPos();
+		e.preventDefault();
+		e.stopPropagation();
+	},
+	render:function () {
+	return (
+     <span className="controller-unit" onClick={this.handleClick}></span>
+		)
 	}
 });
 
@@ -53,6 +91,16 @@ var App  = React.createClass({
 				x:[0,0],
 				topY:[0,0]
 		}
+	},
+	//翻转函数，闭包函数
+	inverse:function(index){
+		return function(){
+			var imgsArrangeArr = this.state.imgsArrangeArr;
+			imgsArrangeArr[index].isInverse = !imgsArrangeArr[index].isInverse;
+			this.setState({
+				imgsArrangeArr : imgsArrangeArr
+			})
+		}.bind(this);
 	},
 //组建加载后，为每章图片
 	componentDidMount:function(){
@@ -90,7 +138,10 @@ var App  = React.createClass({
 				pos:{
 					left:'0',
 					top:'0'
-				}
+				},
+				rotate:0 , //旋转角度
+				isInverse:false,   //图片正反面
+				isCenter:false   //center
 			}*/]
 		}
 	},
@@ -114,16 +165,24 @@ var App  = React.createClass({
 			topImgNum = Math.floor(Math.random() * 2), //取一个或者不取
 			topImgSpliceIndex =0,
 			imgsArrangeCenterArr = imgsArrangeArr.splice(centerIndex,1);
-			// 首先居中
-			imgsArrangeCenterArr[0].pos = centerPos;
+			// 首先居中 ,不需要旋转
+			imgsArrangeCenterArr[0]={
+				pos:centerPos,
+				rotate:0,
+				isCenter:true
+			}
 			topImgSpliceIndex = Math.floor(Math.random() * (imgsArrangeArr.length - topImgNum));
 			imgsArrangeTopArr = imgsArrangeArr.splice(topImgSpliceIndex,topImgNum);
 
 			//布局位于上侧的图片
 			imgsArrangeTopArr.forEach(function(value,index){
-				imgsArrangeTopArr[index].pos={
-					top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
-					left:getRangeRandom(vPosRangX[0],vPosRangX[1])
+				imgsArrangeTopArr[index]={
+					pos:{
+						top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
+						left:getRangeRandom(vPosRangX[0],vPosRangX[1])
+					},
+					rotate:get30DegRandom(),
+					isCenter:false
 				}
 			});
 
@@ -136,9 +195,13 @@ var App  = React.createClass({
 					hPosRangeLORX = hPosRangeRightSecX;
 				}
 
-				imgsArrangeArr[i].pos = {
-					top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
-					left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+				imgsArrangeArr[i]={
+					pos:{
+						top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
+						left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+					},
+					rotate:get30DegRandom(),
+					isCenter:false
 				}
 			}
 			if(imgsArrangeTopArr&&imgsArrangeTopArr[0]){
@@ -151,6 +214,12 @@ var App  = React.createClass({
 				imgsArrangeArr:imgsArrangeArr
 			})
 	},
+//利用rearrange 函数
+	center:function(index){
+		return function(){
+			this.rearrange(index);
+		}.bind(this)
+	},
 	render:function(){
 		var controllerUnits = [],
 			imgFigures =[];
@@ -161,10 +230,14 @@ var App  = React.createClass({
 					pos:{
 						left:'0',
 						top:'0'
-					}
+					},
+					rotate:0,
+					isInverse:false,
+					isCenter:false,
 				}
 			}
-		imgFigures.push(<ImgFigure ref={'ImgFigure'+index} data={value} arrange={self.state.imgsArrangeArr[index]}/>);
+		imgFigures.push(<ImgFigure ref={'ImgFigure'+index} data={value} arrange={self.state.imgsArrangeArr[index]} inverse={self.inverse(index)} center={self.center(index)} />);
+		controllerUnits.push(<ControllerUnit center={self.center(index)}  center={self.center(index)}/>)
 		});
       return (
          <section className="stage" ref="stage">

@@ -1,3 +1,8 @@
+@font-face{
+	font-family: 'icons-turn-arrow';
+	src:url("../font/icon/iconfont.eot") format("embedded-opentype"),url("../font/icon/iconfont.woff") format("woff"),
+	url("../font/icon/iconfont.ttf") format("truetype"),url("../font/icon/iconfont.svg") format("svg");
+}
 *{
 	padding: 0;
 	margin: 0;
@@ -91,6 +96,7 @@ figcaption{
 	text-align: center;
 }
 .controller-unit{
+	vertical-align: middle;
 	display: inline-block;
 	margin: 0 5px;
 	text-align: center;
@@ -104,4 +110,12 @@ figcaption{
 .is-center{
 	background-color: #888;
 	transform: scale(1);
+}
+.is-center::after{
+	color: #fff;
+	line-height: 30px;
+	font-family: "icons-turn-arrow";
+	content: "\e600";
+	font-size: 80%;
+	-webkit-font-smoothing:antialiased;
 }
